@@ -1,10 +1,8 @@
 package com.ourhome.taehyeong.authentication.provider;
 
 import com.ourhome.taehyeong.authentication.UsernamePasswordAuthentication;
-import com.ourhome.taehyeong.authentication.model.AuthUserDto;
-//import com.ourhome.taehyeong.authentication.proxy.AuthenticationServerProxy;
-//import com.ourhome.taehyeong.entities.User;
-import com.ourhome.taehyeong.service.UserService;
+import com.ourhome.taehyeong.authentication.dto.AuthUserDto;
+import com.ourhome.taehyeong.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class UsernamePasswordAuthenticationProvider implements AuthenticationProvider {
 
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -26,7 +24,7 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
         AuthUserDto authUserDto = AuthUserDto.builder()
                 .username(username)
                 .password(password).build();
-        userService.auth(authUserDto);
+        authService.auth(authUserDto);
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 

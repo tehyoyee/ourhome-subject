@@ -1,18 +1,22 @@
 package com.ourhome.taehyeong.service;
 
-import com.ourhome.taehyeong.authentication.model.AuthUserDto;
-import com.ourhome.taehyeong.entities.Otp;
+import com.ourhome.taehyeong.entities.Privacy;
 import com.ourhome.taehyeong.entities.User;
+import com.ourhome.taehyeong.entities.dto.PayloadDto;
+import com.ourhome.taehyeong.entities.dto.PrivacyDto;
 import com.ourhome.taehyeong.entities.enums.Role;
-import com.ourhome.taehyeong.repository.OtpRepository;
+import com.ourhome.taehyeong.repository.PrivacyRepository;
 import com.ourhome.taehyeong.repository.UserRepository;
-import com.ourhome.taehyeong.utils.GenerateCodeUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -26,57 +30,71 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private OtpRepository otpRepository;
+    private PrivacyRepository privacyRepository;
 
-    public void addUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole(Role.ROLE_GUEST);
-        userRepository.save(user);
+    @Autowired
+    private AuthService authService;
+
+    public void deleteUserByUsername(String name) {
+        Optional<User> found = userRepository.findUserByUsername(name);
+
+        if (found.isPresent())
+            userRepository.delete(found.get());
+        else
+            throw new UsernameNotFoundException("user does not exist");
     }
 
-    public void auth(AuthUserDto user) {
-        Optional<User> o =
-                userRepository.findUserByUsername(user.getUsername());
+    public void updatePrivacy(HttpServletRequest request, PrivacyDto updatePrivacyDto) {
+        String jwt = request.getHeader("Authorization");
+        PayloadDto payloadDto = authService.findUsernameByToken(jwt);
 
-        if(o.isPresent()) {
-            User u = o.get();
-            if (passwordEncoder.matches(user.getPassword(), u.getPassword())) {
-                renewOtp(u);
-            } else {
-                throw new BadCredentialsException("Bad credentials.");
+        String username = updatePrivacyDto.getUsername();
+        Optional<User> found = userRepository.findUserByUsername(username);
+        if (found.isEmpty()) throw new UsernameNotFoundException("username : " + username + "does not exist.");
+        Role foundRole = found.get().getRole();
+
+        if (foundRole == Role.ROLE_ADMIN && payloadDto.getRole().equals(Role.ROLE_OPERATOR.toString()))
+            throw new AccessDeniedException("Access denied.");
+
+        Privacy privacy = found.get().getPrivacy();
+        privacy.setUniversity(updatePrivacyDto.getUniversity());
+        privacy.setBirth(updatePrivacyDto.getBirth());
+        privacy.setName(updatePrivacyDto.getName());
+        privacy.setAddress(updatePrivacyDto.getAddress());
+        privacyRepository.save(privacy);
+    }
+
+    public List<Privacy> getPrivacy() {
+        List<Privacy> result = privacyRepository.findAll();
+        for (Privacy x : result) {
+            System.out.println(x.getBirth());
+        }
+        return result;
+    }
+
+    // 찾을 기준, 기준 인자, 정렬여부, 갯수
+    public List<Privacy> getPrivacyByParam(String columnName, String arg) {
+
+        if (!columnName.isEmpty() && !arg.isEmpty()) {
+            if (columnName.equals("name")) {
+                return privacyRepository.findPrivacyByName(arg);
             }
-        } else {
-            throw new BadCredentialsException("Bad credentials.");
+            if (columnName.equals("university")) {
+                return privacyRepository.findPrivacyByUniversity(arg);
+            }
+            if (columnName.equals("address")) {
+                return  privacyRepository.findPrivacyByAddress(arg);
+            }
+            if (columnName.equals("birthyear")) {
+                String startYear = arg + "-1-1";
+                String endYear = arg + "-12-31";
+                return  privacyRepository.findPrivacyByBirthBetween(Date.valueOf(startYear), Date.valueOf(endYear));
+            }
         }
+        throw new IllegalArgumentException("invalid parameter");
     }
 
-    public boolean checkOtp(String username, String code) {
-        Optional<Otp> userOtp = otpRepository.findOtpByUsername(username);
-        if (userOtp.isPresent()) {
-            Otp otp = userOtp.get();
-            return code.equals(otp.getCode());
-        }
-
-        return false;
+    public List<Privacy> getPrivacyAll() {
+        return privacyRepository.findAll();
     }
-
-    private void renewOtp(User u) {
-        String code = GenerateCodeUtil.generateCode();
-
-        Optional<Otp> userOtp = otpRepository.findOtpByUsername(u.getUsername());
-        if (userOtp.isPresent()) {
-            Otp otp = userOtp.get();
-            otp.setCode(code);
-        } else {
-            Otp otp = new Otp();
-            otp.setUsername(u.getUsername());
-            otp.setCode(code);
-            otpRepository.save(otp);
-        }
-    }
-
-    public Role getRoleByUsername(String username) {
-        return userRepository.findRoleByUsername(username).orElse(Role.ROLE_GUEST);
-    }
-
 }

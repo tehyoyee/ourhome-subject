@@ -16,14 +16,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,7 +45,6 @@ public class InitialAuthenticationFilter extends OncePerRequestFilter {
         String password = request.getHeader("password");
         String code = request.getHeader("code");
 
-
         if (code == null) {
             Authentication a = new UsernamePasswordAuthentication(username, password);
             usernamePasswordAuthenticationProvider.authenticate(a);
@@ -60,11 +57,10 @@ public class InitialAuthenticationFilter extends OncePerRequestFilter {
             Role role;
             if (user.isPresent())
                 role = user.get().getRole();
-            else role = Role.ROLE_GUEST;
+            else role = Role.ROLE_EMPLOYEE;
 
             String jwt = Jwts.builder()
-                    .setClaims(Map.of("username", username))
-                    .setClaims(Map.of("role", role.toString()))
+                    .setClaims(Map.of("username", username, "role", role.toString()))
                     .signWith(key)
                     .compact();
             response.setHeader("Authorization", jwt);

@@ -14,4 +14,5 @@ public class UsernamePasswordAuthentication extends UsernamePasswordAuthenticati
     public UsernamePasswordAuthentication(Object principal, Object credentials) {
         super(principal, credentials);
     }
+
 }

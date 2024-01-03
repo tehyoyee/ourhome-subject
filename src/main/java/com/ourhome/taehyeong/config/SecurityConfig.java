@@ -7,6 +7,7 @@ import com.ourhome.taehyeong.authentication.provider.UsernamePasswordAuthenticat
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,11 +21,6 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Autowired
-    private OtpAuthenticationProvider otpAuthenticationProvider;
-
-    @Autowired
-    private UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -34,18 +30,13 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth ->
                         auth
-//                                .anyRequest().permitAll());
-//                                .anyRequest().authenticated());
-                                .requestMatchers("/admin")
-                                    .hasRole("ADMIN")
-                                .requestMatchers("/employee")
-                                    .hasRole("EMPLOYEE")
-                                .requestMatchers("/employee")
-                                    .hasRole("GUEST")
                                 .requestMatchers("/user/add")
                                     .permitAll()
+                                .requestMatchers("/user/privacy/update")
+                                .hasAnyRole("OPERATOR", "ADMIN")
+                                .requestMatchers("/user/privacy/delete")
+                                .hasRole("ADMIN")
                                 .anyRequest()
-//                                .hasAnyRole());
                                     .authenticated());
 
         http.addFilterAt(

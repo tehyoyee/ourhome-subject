@@ -1,4 +1,4 @@
-package com.ourhome.taehyeong.authentication.model;
+package com.ourhome.taehyeong.authentication.dto;
 
 import lombok.Builder;
 import lombok.Data;

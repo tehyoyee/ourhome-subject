@@ -1,7 +1,7 @@
 package com.ourhome.taehyeong.authentication.filters;
 
 import com.ourhome.taehyeong.authentication.UsernamePasswordAuthentication;
-import com.ourhome.taehyeong.service.UserService;
+import com.ourhome.taehyeong.service.AuthService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -20,7 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -30,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String signingKey;
 
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

@@ -12,9 +12,9 @@ public final class GenerateCodeUtil {
 
         try {
             SecureRandom random = SecureRandom.getInstanceStrong();
-            code = String.valueOf(random.nextInt(9000) + 1000);
+            code = String.valueOf(random.nextInt(900000) + 100000);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Problem when generating the random code.");
+            throw new RuntimeException("Problem occured when generating the random code.");
         }
 
         return code;
